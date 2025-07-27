@@ -8,21 +8,22 @@ defer {
     SDL.quit()
 }
 
-val WIN = assert(SDL.createWindow @{
+val WIN = SDL.createWindow @{
 	title  = "Birds - 01 (task)",
 	width  = 640,
 	height = 480,
     flags  = @{ SDL.flags.OpenGL },
-})
-val REN = assert(SDL.createRenderer(WIN,-1))
+} --> assert
+
+val REN = SDL.createRenderer(WIN,-1) --> assert
 set sdl.ren = REN
 
 val UP = assert(REN::createTextureFromSurface(sfc)) where {
-    sfc = assert(IMG.load("res/bird-up.png"))
+    sfc = IMG.load("res/bird-up.png") --> assert
 }
 
 val DN = assert(REN::createTextureFromSurface(sfc)) where {
-    sfc = assert(IMG.load("res/bird-dn.png"))
+    sfc = IMG.load("res/bird-dn.png") --> assert
 }
 
 val W,H = do {
