@@ -1,164 +1,153 @@
-local SDL = require "SDL"
-local IMG = require "SDL.image"
+val SDL = require "SDL"
+val IMG = require "SDL.image"
 
-local sdl = require "atmos.env.sdl"
+val sdl = require "atmos.env.sdl"
 
-local point_vs_rect = sdl.point_vs_rect
-local evt_vs_key    = sdl.evt_vs_key
-
-local _ <close> = defer(function ()
+defer {
     IMG.quit()
     SDL.quit()
-end)
+}
 
-local WIN = assert(SDL.createWindow {
-	title  = "Birds - 11 (pause)",
+val WIN = SDL.createWindow @{
+	title  = "Birds - 01 (task)",
 	width  = 640,
 	height = 480,
-    flags  = { SDL.flags.OpenGL },
-})
-local REN = assert(SDL.createRenderer(WIN,-1))
+    flags  = @{ SDL.flags.OpenGL },
+} --> assert
 
-local UP; do
-    local sfc = assert(IMG.load("res/bird-up.png"))
-    UP = assert(REN:createTextureFromSurface(sfc))
-end
+val REN = SDL.createRenderer(WIN,-1) --> assert
+set sdl.ren = REN
 
-local DN; do
-    local sfc = assert(IMG.load("res/bird-dn.png"))
-    DN = assert(REN:createTextureFromSurface(sfc))
-end
+val UP = assert(REN::createTextureFromSurface(sfc)) where {
+    sfc = IMG.load("res/bird-up.png") --> assert
+}
 
-local W,H; do
-    local _,_,a,b = UP:query()
-    local _,_,c,d = DN:query()
-    assert(a==c and b==d)
-    W,H = a,b
-end
+val DN = assert(REN::createTextureFromSurface(sfc)) where {
+    sfc = IMG.load("res/bird-dn.png") --> assert
+}
+
+val W,H = do {
+    val _,_,a,b = UP::query()
+    val _,_,c,d = DN::query()
+    assert((a==c) && (b==d))
+    (a,b)
+}
 
 math.randomseed()
 
-function Bird (y, speed)
-    local rect = { x=0, y=y, w=W, h=H }
-    task().rect  = rect
-    task().alive = true
-    local img = DN
-    watching(function(it) return rect.x>640 end, function ()
-        watching('collided', function ()
-            par (
-                function ()
-                    local ang = 0
-                    every('sdl.step', function (_,ms)
-                        local v = ms * speed
-                        rect.x = math.floor(rect.x + (v/1000))
-                        rect.y = math.floor(y - ((speed/5) * math.sin(ang)))
-                        ang = ang + ((3.14*v)/100000)
-                        local tmp = math.floor(((ang+(3.14/2))/3.14))
-                        img = (tmp%2 == 0) and UP or DN
-                    end)
-                end,
-                function ()
-                    every('sdl.draw', function ()
-                        REN:copy(img, nil, rect)
-                    end)
-                end
-            )
-        end)
-        task().alive = false
-        watching(function () return rect.y>480-H end, function ()
-            par(function ()
-                every('sdl.step', function (_,ms)
-                    rect.y = math.floor(rect.y + (ms * 0.5))
-                end)
-            end, function ()
-                every('sdl.draw', function ()
-                    REN:copy(DN, nil, rect)
-                end)
-            end)
-        end)
-        watching(clock{s=1}, function ()
-            while true do
-                await(clock{ms=100})
-                watching(clock{ms=100}, function ()
-                    every('sdl.draw', function ()
-                        REN:copy(DN, nil, rect)
-                    end)
-                end)
-            end
-        end)
-    end)
-end
-
-sdl.ren = REN
-call(function ()
-    par (function ()
-        toggle('Show', function ()
-            local birds <close> = tasks(5)
-            par (
-                function ()
-                    every (clock{ms=500}, function ()
-                        spawn_in(birds, Bird, math.random(0,480), 100 + math.random(0,100))
-                    end)
-                end,
-                function ()
-                    every ('sdl.step', function (ms)
-                        for _,b1 in getmetatable(birds).__pairs(birds) do
-                            for _,b2 in getmetatable(birds).__pairs(birds) do
-                                local col = (b1~=b2) and b1.alive and b2.alive and SDL.hasIntersection(b1.rect, b2.rect)
-                                if col then
-                                    emit_in(b1, 'collided')
-                                    emit_in(b2, 'collided')
-                                    break
-                                end
-                            end
-                        end
-                    end)
-                end,
-                function ()
-                    while true do
-                        local _,_,bird = catch ('Track', function ()
-                            every (SDL.event.MouseButtonDown, function (evt)
-                                for _,b in getmetatable(birds).__pairs(birds) do
-                                    if b.alive and point_vs_rect(evt,b.rect) then
-                                        throw('Track', b)
-                                    end
-                                end
-                            end)
-                        end)
-                        watching (bird, function ()
-                            local l = {
-                                x1=640/2, y1=480,
-                            }
-                            every ('sdl.draw', function ()
-                                l.x2 = bird.rect.x + (W/2)
-                                l.y2 = bird.rect.y + (H/2)
-                                REN:setDrawColor(0xFFFFFFFF)
-                                REN:drawLine(l)
-                                REN:setDrawColor(0x00000000)
-                            end)
-                        end)
-                    end
-                end
-            )
-        end)
-    end, function ()
-        while true do
-            await(SDL.event.KeyDown, function (e) return evt_vs_key(e,'P') end)
-            emit('Show', false)
-            watching(SDL.event.KeyDown, function (e) return evt_vs_key(e,'P') end, function ()
-                local sfc = assert(IMG.load("res/pause.png"))
-                local img = assert(REN:createTextureFromSurface(sfc))
-                local _,_,w,h = img:query()
-                local r = {
-                    x = math.floor(640/2 - w/2),
-                    y = math.floor(480/2 - h/2),
-                    w=w, h=h
+func Bird (y, speed) {
+    val rect = @{ x=0, y=y, w=W, h=H }
+    set pub = @{
+        rect  = rect,
+        alive = true,
+    }
+    var img = DN
+    watching (func () { rect.x>640 }) {
+        watching :collided {
+            par {
+                var ang = 0
+                every :sdl.step {
+                    val v = it * speed
+                    set rect.x = math.floor(rect.x + (v/1000))
+                    set rect.y = math.floor(y - ((speed/5) * math.sin(ang)))
+                    set ang = ang + ((3.14*v)/100000)
+                    val tmp = ((ang+(3.14/2))/3.14) --> math.floor
+                    set img = if (tmp%2)==0 => UP => DN
                 }
-                every('sdl.draw', function ()
-                    REN:copy(img, nil, r)
-                end)
-            end)
-            emit('Show', true)
-        end
-    end)
-end)
+            } with {
+                every :sdl.draw {
+                    REN::copy(img, nil, rect)
+                }
+            }
+        }
+        set pub.alive = false
+        watching (func () { rect.y>(480-H) }) {
+            par {
+                every :sdl.step {
+                    set rect.y = (rect.y + (it * 0.5)) --> math.floor
+                }
+            } with {
+                every :sdl.draw {
+                    REN::copy(DN, nil, rect)
+                }
+            }
+        }
+        watching @1 {
+            loop {
+                await @.100
+                watching @.100 {
+                    every :sdl.draw {
+                        REN::copy(DN, nil, rect)
+                    }
+                }
+            }
+        }
+    }
+}
+
+par {
+    toggle :Show {
+        pin birds = tasks(5)
+        par {
+            every @.500 {
+                spawn [birds] Bird(math.random(0,480), 100 + math.random(0,100))
+            }
+        } with {
+            every :sdl.step {
+                loop _,b1 in birds {
+                    loop _,b2 in birds {
+                        val col = (b1!=b2) && b1.pub.alive && b2.pub.alive && sdl.rect_vs_rect(b1.pub.rect, b2.pub.rect)
+                        if col {
+                            emit [b1] :collided
+                            emit [b2] :collided
+                            break
+                        }
+                    }
+                }
+            }
+        } with {
+            loop {
+                val _,_,bird = catch :Track {
+                    every SDL.event.MouseButtonDown {
+                        loop _,b in birds {
+                            if b.pub.alive && sdl.point_vs_rect(it,b.pub.rect) {
+                                throw('Track', b)
+                            }
+                        }
+                    }
+                }
+                watching bird {
+                    val l = @{
+                        x1=640/2, y1=480,
+                    }
+                    every :sdl.draw {
+                        set l.x2 = bird.pub.rect.x + (W/2)
+                        set l.y2 = bird.pub.rect.y + (H/2)
+                        REN::setDrawColor(0xFFFFFFFF)
+                        REN::drawLine(l)
+                        REN::setDrawColor(0x00000000)
+                    }
+                }
+            }
+        }
+    }
+} with {
+    loop {
+        await(SDL.event.KeyDown, 'P')
+        emit('Show', false)
+        watching SDL.event.KeyDown, 'P' {
+            val sfc = assert(IMG.load("res/pause.png"))
+            val img = assert(REN::createTextureFromSurface(sfc))
+            val _,_,w,h = img::query()
+            val r = @{
+                x = ((640/2) - (w/2)) --> math.floor,
+                y = ((480/2) - (h/2)) --> math.floor,
+                w=w, h=h,
+            }
+            every :sdl.draw {
+                REN::copy(img, nil, r)
+            }
+        }
+        emit('Show', true)
+    }
+}
