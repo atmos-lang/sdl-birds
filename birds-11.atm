@@ -42,7 +42,7 @@ func Bird (y, speed) {
         alive = true,
     }
     var img = DN
-    watching (func () { rect.x>640 }) {
+    watching \{rect.x>640} {
         watching :collided {
             par {
                 var ang = 0
@@ -61,7 +61,7 @@ func Bird (y, speed) {
             }
         }
         set pub.alive = false
-        watching (func () { rect.y>(480-H) }) {
+        watching \{rect.y>(480-H)} {
             par {
                 every :sdl.step {
                     set rect.y = (rect.y + (it * 0.5)) --> math.floor
