@@ -92,7 +92,10 @@ par {
         pin birds = tasks(5)
         par {
             every @.500 {
-                spawn [birds] Bird(math.random(0,480), 100 + math.random(0,100))
+                spawn [birds] Bird(y,s) where {
+                    y = math.random(0, 480)
+                    s = 100 + math.random(0,100)
+                }
             }
         } with {
             every :sdl.step {
@@ -109,11 +112,11 @@ par {
             }
         } with {
             loop {
-                val _,_,bird = catch :Track {
+                val bird = do :Track {
                     every SDL.event.MouseButtonDown \(_,e) {
                         loop _,b in birds {
                             if b.pub.alive && sdl.point_vs_rect(e,b.pub.rect) {
-                                throw('Track', b)
+                                escape('Track', b)
                             }
                         }
                     }
@@ -138,12 +141,14 @@ par {
         await(SDL.event.KeyDown, 'P')
         emit('Show', false)
         watching SDL.event.KeyDown, 'P' {
-            val sfc = assert(IMG.load("res/pause.png"))
-            val img = assert(REN::createTextureFromSurface(sfc))
+            val img = tex where {
+                sfc = IMG.load("res/pause.png") -> assert
+                tex = REN::createTextureFromSurface(sfc) -> assert
+            }
             val _,_,w,h = img::query()
             val r = @{
-                x = ((640/2) - (w/2)) --> math.floor,
-                y = ((480/2) - (h/2)) --> math.floor,
+                x = (640/2)-(w/2) --> math.floor,
+                y = (480/2)-(h/2) --> math.floor,
                 w=w, h=h,
             }
             every :sdl.draw {
