@@ -48,7 +48,7 @@ func Bird (y, speed) {
         watching :collided {
             par {
                 var ang = 0
-                every :sdl.step \(_,ms) {
+                every _,ms in :sdl.step {
                     val v = ms * speed
                     set rect.x = (rect.x + (v/1000)) --> math.floor
                     set rect.y = (y - ((speed/5) * math.sin(ang))) --> math.floor
@@ -65,7 +65,7 @@ func Bird (y, speed) {
         set pub.alive = false
         watching \{rect.y>(480-H)} {
             par {
-                every :sdl.step \(_,ms) {
+                every _,ms in :sdl.step {
                     set rect.y = (rect.y + (ms * 0.5)) --> math.floor
                 }
             } with {
@@ -113,7 +113,7 @@ par {
         } with {
             loop {
                 val bird = do :Track {
-                    every SDL.event.MouseButtonDown \(_,e) {
+                    every _,e in SDL.event.MouseButtonDown {
                         loop _,b in birds {
                             if b.pub.alive && sdl.point_vs_rect(e,b.pub.rect) {
                                 escape('Track', b)
