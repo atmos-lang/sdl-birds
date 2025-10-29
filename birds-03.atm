@@ -1,12 +1,6 @@
+val sdl = require "atmos.env.sdl"
 val SDL = require "SDL"
 val IMG = require "SDL.image"
-
-val sdl = require "atmos.env.sdl"
-
-defer {
-    IMG.quit()
-    SDL.quit()
-}
 
 val WIN = SDL.createWindow @{
 	title  = "Birds - 03 (pool)",
