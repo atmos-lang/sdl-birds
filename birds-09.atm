@@ -2,15 +2,12 @@ val sdl = require "atmos.env.sdl"
 val SDL = require "SDL"
 val IMG = require "SDL.image"
 
-val WIN = SDL.createWindow @{
+val _,REN = sdl.window @{
 	title  = "Birds - 09 (blink)",
 	width  = 640,
 	height = 480,
     flags  = @{ SDL.flags.OpenGL },
-} --> assert
-
-val REN = SDL.createRenderer(WIN,-1) --> assert
-set sdl.ren = REN
+}
 
 val UP = tex where {
     sfc = IMG.load("res/bird-up.png") --> assert
@@ -44,15 +41,15 @@ func Bird (y, speed) {
                 var ang = 0
                 every _,ms in :clock {
                     val v = ms * speed
-                    set rect.x = (rect.x + (v/1000)) --> math.floor
-                    set rect.y = (y - ((speed/5) * math.sin(ang))) --> math.floor
+                    set rect.x = (rect.x + (v/1000))
+                    set rect.y = (y - ((speed/5) * math.sin(ang)))
                     set ang = ang + ((3.14*v)/100000)
                     val tmp = ((ang+(3.14/2))/3.14) --> math.floor
                     set img = if (tmp%2)==0 => UP => DN
                 }
             } with {
                 every :sdl.draw {
-                    REN::copy(img, nil, rect)
+                    REN::copy(img, nil, sdl.ints(rect))
                 }
             }
         }
@@ -60,11 +57,11 @@ func Bird (y, speed) {
         watching \{rect.y>(480-H)} {
             par {
                 every _,ms in :clock {
-                    set rect.y = (rect.y + (ms * 0.5)) --> math.floor
+                    set rect.y = (rect.y + (ms * 0.5))
                 }
             } with {
                 every :sdl.draw {
-                    REN::copy(DN, nil, rect)
+                    REN::copy(DN, nil, sdl.ints(rect))
                 }
             }
         }
@@ -73,7 +70,7 @@ func Bird (y, speed) {
                 await @.100
                 watching @.100 {
                     every :sdl.draw {
-                        REN::copy(DN, nil, rect)
+                        REN::copy(DN, nil, sdl.ints(rect))
                     }
                 }
             }

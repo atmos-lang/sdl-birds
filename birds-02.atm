@@ -2,15 +2,12 @@ val sdl = require "atmos.env.sdl"
 val SDL = require "SDL"
 val IMG = require "SDL.image"
 
-val WIN = SDL.createWindow @{
+val _,REN = sdl.window @{
 	title  = "Birds - 02 (scope)",
 	width  = 640,
 	height = 480,
     flags  = @{ SDL.flags.OpenGL },
-} --> assert
-
-val REN = SDL.createRenderer(WIN,-1) --> assert
-set sdl.ren = REN
+}
 
 val UP = tex where {
     sfc = IMG.load("res/bird-up.png") --> assert
