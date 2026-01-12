@@ -53,22 +53,20 @@ func Bird (y, speed) {
     }
 }
 
-loop {
-    pin birds = tasks(5)
-    par {
-        every @.500 {
-            spawn [birds] Bird(math.random(0,480), 100 + math.random(0,100))
-        }
-    } with {
-        every :clock {
-            loop _,b1 in birds {
-                loop _,b2 in birds {
-                    val col = (b1!=b2) && sdl.rect_vs_rect(b1.pub.rect, b2.pub.rect)
-                    if col {
-                        emit [b1] :collided
-                        emit [b2] :collided
-                        break
-                    }
+pin birds = tasks(5)
+par {
+    every @.500 {
+        spawn [birds] Bird(math.random(0,480), 100 + math.random(0,100))
+    }
+} with {
+    every :clock {
+        loop _,b1 in birds {
+            loop _,b2 in birds {
+                val col = (b1!=b2) && sdl.rect_vs_rect(b1.pub.rect, b2.pub.rect)
+                if col {
+                    emit [b1] :collided
+                    emit [b2] :collided
+                    break
                 }
             }
         }
