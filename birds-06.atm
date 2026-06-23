@@ -32,7 +32,7 @@ task Bird (y, speed) {
     var xx  = 0
     var yy  = y
     var img = DN
-    watching \{xx>640} {
+    watching until \{xx>640} {
         par {
             var ang = 0
             loop us on :clock {
