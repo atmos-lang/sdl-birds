@@ -35,7 +35,7 @@ task Bird (y, speed) {
         rect  = rect,
     ]
     var img = DN
-    watching until rect.x>640 {
+    watching until (rect.x>640) {
         watching :collided {
             par {
                 var ang = 0
@@ -54,7 +54,7 @@ task Bird (y, speed) {
             }
         }
         set pub.alive = false
-        watching until rect.y>(480-H) {
+        watching until (rect.y>(480-H)) {
             par {
                 loop us on :clock {
                     set rect.y = (rect.y + ((0.5 * us) / 1000))

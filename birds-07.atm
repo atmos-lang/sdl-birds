@@ -34,7 +34,7 @@ task Bird (y, speed) {
         rect = rect,
     ]
     var img = DN
-    watching \e{ (rect.x>640) || (e==:collided) } {
+    watching until ((rect.x>640) || (it==:collided)) {
         par {
             var ang = 0
             loop us on :clock {

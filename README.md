@@ -8,13 +8,13 @@ An [Atmos][atmos] + [atmos-env-sdl][env-sdl] tutorial in 11 steps.
 # Install
 
 ```
-sudo luarocks --lua-version=5.4 install atmos-lang 0.7
-sudo luarocks --lua-version=5.4 install atmos-env-sdl 0.2
+sudo luarocks --lua-version=5.4 install atmos-lang 0.8
+sudo luarocks --lua-version=5.4 install atmos-env-sdl 0.3
 ```
 
 # Run
 
 ```
-git checkout v0.4
+git checkout v0.5
 atmos birds-11.atm
 ```
